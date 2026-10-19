@@ -595,6 +595,15 @@ def heatmap_fig(df: pd.DataFrame, title="", fmt=".2f", scale="RdBu_r", zmin=None
     return fig
 
 
+def pair_table(s: pd.Series) -> pd.DataFrame:
+    """Turn a pair-indexed Series (MultiIndex of two assets) into a plain three-column table."""
+    return pd.DataFrame({
+        "Asset A": [i[0] for i in s.index],
+        "Asset B": [i[1] for i in s.index],
+        "Correlation": s.values,
+    })
+
+
 def show(fig, key=None):
     st.plotly_chart(fig, key=key)
 
@@ -919,13 +928,10 @@ with tabs[2]:
         with c2:
             pairs = cm.where(np.triu(np.ones(cm.shape), 1).astype(bool)).stack().sort_values()
             st.markdown("**Least correlated pairs (best diversifiers)**")
-            st.dataframe(pairs.head(5).rename("Correlation").reset_index().rename(
-                columns={"level_0": "Asset A", "level_1": "Asset B"}).style.format({"Correlation": "{:.2f}"}),
-                hide_index=True)
+            st.dataframe(pair_table(pairs.head(5)).style.format({"Correlation": "{:.2f}"}), hide_index=True)
             st.markdown("**Most correlated pairs**")
-            st.dataframe(pairs.tail(5).iloc[::-1].rename("Correlation").reset_index().rename(
-                columns={"level_0": "Asset A", "level_1": "Asset B"}).style.format({"Correlation": "{:.2f}"}),
-                hide_index=True)
+            st.dataframe(pair_table(pairs.tail(5).iloc[::-1]).style.format({"Correlation": "{:.2f}"}),
+                         hide_index=True)
             st.metric("Average pairwise correlation", f"{pairs.mean():.2f}")
 
         st.subheader("Rolling correlation")
